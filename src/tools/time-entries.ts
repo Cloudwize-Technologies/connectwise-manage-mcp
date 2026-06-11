@@ -2,6 +2,23 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { CwManageClient } from "../api-client.js";
 
+function trimTimeEntry(t: Record<string, any>) {
+  return {
+    id: t.id,
+    chargeToType: t.chargeToType,
+    chargeToId: t.chargeToId,
+    member: t.member?.identifier,
+    company: t.company?.name,
+    workType: t.workType?.name,
+    workRole: t.workRole?.name,
+    timeStart: t.timeStart,
+    timeEnd: t.timeEnd,
+    actualHours: t.actualHours,
+    billableOption: t.billableOption,
+    notes: t.notes,
+  };
+}
+
 export function registerTimeEntryTools(server: McpServer, client: CwManageClient) {
   server.tool(
     "cw_search_time_entries",
@@ -13,22 +30,21 @@ export function registerTimeEntryTools(server: McpServer, client: CwManageClient
       orderBy: z.string().optional().describe("Field to order by"),
     },
     async ({ conditions, page, pageSize, orderBy }) => {
-      const result = await client.get("/time/entries", {
+      const result = await client.get<Record<string, any>[]>("/time/entries", {
         conditions,
         page: page ?? 1,
         pageSize: pageSize ?? 25,
         orderBy,
       });
-      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      const trimmed = Array.isArray(result) ? result.map(trimTimeEntry) : result;
+      return { content: [{ type: "text", text: JSON.stringify(trimmed, null, 2) }] };
     },
   );
 
   server.tool(
     "cw_get_time_entry",
     "Get a specific time entry by ID.",
-    {
-      id: z.number().describe("Time entry ID"),
-    },
+    { id: z.number().describe("Time entry ID") },
     async ({ id }) => {
       const result = await client.get(`/time/entries/${id}`);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
@@ -63,7 +79,6 @@ export function registerTimeEntryTools(server: McpServer, client: CwManageClient
       if (internalNotes) body.internalNotes = internalNotes;
       if (workTypeId) body.workType = { id: workTypeId };
       if (workRoleId) body.workRole = { id: workRoleId };
-
       const result = await client.post("/time/entries", body);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     },
