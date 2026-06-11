@@ -2,6 +2,20 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { CwManageClient } from "../api-client.js";
 
+function trimCompany(c: Record<string, any>) {
+  return {
+    id: c.id,
+    identifier: c.identifier,
+    name: c.name,
+    status: c.status?.name,
+    type: c.types?.map((t: any) => t.name).join(", "),
+    phoneNumber: c.phoneNumber,
+    city: c.city,
+    state: c.state,
+    website: c.website,
+  };
+}
+
 export function registerCompanyTools(server: McpServer, client: CwManageClient) {
   server.tool(
     "cw_search_companies",
@@ -13,22 +27,21 @@ export function registerCompanyTools(server: McpServer, client: CwManageClient) 
       orderBy: z.string().optional().describe("Field to order by"),
     },
     async ({ conditions, page, pageSize, orderBy }) => {
-      const result = await client.get("/company/companies", {
+      const result = await client.get<Record<string, any>[]>("/company/companies", {
         conditions,
         page: page ?? 1,
         pageSize: pageSize ?? 25,
         orderBy,
       });
-      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      const trimmed = Array.isArray(result) ? result.map(trimCompany) : result;
+      return { content: [{ type: "text", text: JSON.stringify(trimmed, null, 2) }] };
     },
   );
 
   server.tool(
     "cw_get_company",
     "Get a specific company by ID.",
-    {
-      id: z.number().describe("Company ID"),
-    },
+    { id: z.number().describe("Company ID") },
     async ({ id }) => {
       const result = await client.get(`/company/companies/${id}`);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
@@ -62,7 +75,6 @@ export function registerCompanyTools(server: McpServer, client: CwManageClient) 
       if (country) body.country = { name: country };
       if (phoneNumber) body.phoneNumber = phoneNumber;
       if (website) body.website = website;
-
       const result = await client.post("/company/companies", body);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     },
@@ -73,15 +85,11 @@ export function registerCompanyTools(server: McpServer, client: CwManageClient) 
     "Update an existing company using JSON Patch operations.",
     {
       id: z.number().describe("Company ID"),
-      operations: z
-        .array(
-          z.object({
-            op: z.enum(["replace", "add", "remove"]).describe("Patch operation"),
-            path: z.string().describe("JSON path (e.g. 'name', 'phoneNumber')"),
-            value: z.unknown().optional().describe("New value"),
-          }),
-        )
-        .describe("Array of JSON Patch operations"),
+      operations: z.array(z.object({
+        op: z.enum(["replace", "add", "remove"]).describe("Patch operation"),
+        path: z.string().describe("JSON path (e.g. 'name', 'phoneNumber')"),
+        value: z.unknown().optional().describe("New value"),
+      })).describe("Array of JSON Patch operations"),
     },
     async ({ id, operations }) => {
       const result = await client.patch(`/company/companies/${id}`, operations);
