@@ -2,42 +2,53 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { CwManageClient } from "../api-client.js";
 
+function trimTicket(t: Record<string, any>) {
+  return {
+    id: t.id,
+    summary: t.summary,
+    status: t.status?.name,
+    board: t.board?.name,
+    company: t.company?.name,
+    contact: t.contact?.name,
+    owner: t.owner?.name,
+    priority: t.priority?.name,
+    type: t.type?.name,
+    subType: t.subType?.name,
+    dateEntered: t.dateEntered,
+    lastUpdated: t.lastUpdated,
+    actualHours: t.actualHours,
+    budgetHours: t.budgetHours,
+    agreementId: t.agreement?.id,
+  };
+}
+
 export function registerTicketTools(server: McpServer, client: CwManageClient) {
   server.tool(
     "cw_search_tickets",
     "Search service tickets in ConnectWise Manage. Use 'conditions' for CW query syntax (e.g. \"status/name != 'Closed'\" or \"company/name = 'Acme'\").",
     {
-      conditions: z
-        .string()
-        .optional()
-        .describe("ConnectWise conditions query string"),
+      conditions: z.string().optional().describe("ConnectWise conditions query string"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z
-        .number()
-        .optional()
-        .describe("Results per page (default: 25, max: 1000)"),
-      orderBy: z
-        .string()
-        .optional()
-        .describe("Field to order by (e.g. 'id desc')"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      orderBy: z.string().optional().describe("Field to order by (e.g. 'id desc')"),
     },
     async ({ conditions, page, pageSize, orderBy }) => {
-      const result = await client.get("/service/tickets", {
+      const result = await client.get<Record<string, any>[]>("/service/tickets", {
         conditions,
         page: page ?? 1,
         pageSize: pageSize ?? 25,
         orderBy,
       });
-      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      const trimmed = Array.isArray(result) ? result.map(trimTicket) : result;
+      return { content: [{ type: "text", text: JSON.stringify(trimmed, null, 2) }] };
     },
   );
 
+  // remainder of file unchanged from here
   server.tool(
     "cw_get_ticket",
     "Get a specific service ticket by ID.",
-    {
-      id: z.number().describe("Ticket ID"),
-    },
+    { id: z.number().describe("Ticket ID") },
     async ({ id }) => {
       const result = await client.get(`/service/tickets/${id}`);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
@@ -68,7 +79,6 @@ export function registerTicketTools(server: McpServer, client: CwManageClient) {
       if (typeId) body.type = { id: typeId };
       if (subTypeId) body.subType = { id: subTypeId };
       if (initialDescription) body.initialDescription = initialDescription;
-
       const result = await client.post("/service/tickets", body);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     },
@@ -79,15 +89,11 @@ export function registerTicketTools(server: McpServer, client: CwManageClient) {
     "Update an existing service ticket using JSON Patch operations.",
     {
       id: z.number().describe("Ticket ID"),
-      operations: z
-        .array(
-          z.object({
-            op: z.enum(["replace", "add", "remove"]).describe("Patch operation"),
-            path: z.string().describe("JSON path (e.g. 'status/id', 'summary')"),
-            value: z.unknown().optional().describe("New value"),
-          }),
-        )
-        .describe("Array of JSON Patch operations"),
+      operations: z.array(z.object({
+        op: z.enum(["replace", "add", "remove"]).describe("Patch operation"),
+        path: z.string().describe("JSON path (e.g. 'status/id', 'summary')"),
+        value: z.unknown().optional().describe("New value"),
+      })).describe("Array of JSON Patch operations"),
     },
     async ({ id, operations }) => {
       const result = await client.patch(`/service/tickets/${id}`, operations);
@@ -113,7 +119,6 @@ export function registerTicketTools(server: McpServer, client: CwManageClient) {
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         if (msg.includes("404") || msg.includes("405")) {
-          // allNotes not supported on this CWM version — fall back to /notes
           const result = await client.get(`/service/tickets/${id}/notes`, {
             page: page ?? 1,
             pageSize: pageSize ?? 25,
@@ -142,7 +147,6 @@ export function registerTicketTools(server: McpServer, client: CwManageClient) {
       if (internalAnalysisFlag !== undefined) body.internalAnalysisFlag = internalAnalysisFlag;
       if (resolutionFlag !== undefined) body.resolutionFlag = resolutionFlag;
       if (customerUpdatedFlag !== undefined) body.customerUpdatedFlag = customerUpdatedFlag;
-
       const result = await client.post(`/service/tickets/${id}/notes`, body);
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     },
