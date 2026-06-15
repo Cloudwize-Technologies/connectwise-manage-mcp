@@ -26,7 +26,7 @@ export function registerTimeEntryTools(server: McpServer, client: CwManageClient
     {
       conditions: z.string().optional().describe("ConnectWise conditions query string (e.g. \"member/identifier = 'jsmith'\")"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
       orderBy: z.string().optional().describe("Field to order by"),
     },
     async ({ conditions, page, pageSize, orderBy }) => {
@@ -37,7 +37,22 @@ export function registerTimeEntryTools(server: McpServer, client: CwManageClient
         orderBy,
       });
       const trimmed = Array.isArray(result) ? result.map(trimTimeEntry) : result;
-      return { content: [{ type: "text", text: JSON.stringify(trimmed, null, 2) }] };
+      const returnedCount = Array.isArray(trimmed) ? trimmed.length : undefined;
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            page: page ?? 1,
+            pageSize: pageSize ?? 25,
+            returnedCount,
+            hasMore: returnedCount === (pageSize ?? 25),
+            note: returnedCount === (pageSize ?? 25) ? "This page is full - more results may exist. Narrow your conditions or request the next page if needed" : undefined,
+            results: trimmed,
+          }, null, 2),
+        }],
+      };
+
+      // return { content: [{ type: "text", text: JSON.stringify(trimmed, null, 2) }] };
     },
   );
 
