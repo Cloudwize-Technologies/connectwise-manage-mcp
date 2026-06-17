@@ -9,7 +9,7 @@ export function registerProjectTools(server: McpServer, client: CwManageClient) 
     {
       conditions: z.string().optional().describe("ConnectWise conditions query string"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
       orderBy: z.string().optional().describe("Field to order by"),
     },
     async ({ conditions, page, pageSize, orderBy }) => {
@@ -19,7 +19,21 @@ export function registerProjectTools(server: McpServer, client: CwManageClient) 
         pageSize: pageSize ?? 25,
         orderBy,
       });
-      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      const returnedCount = Array.isArray(result) ? result.length : undefined;
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            page: page ?? 1,
+            pageSize: pageSize ?? 25,
+            returnedCount,
+            hasMore: returnedCount === (pageSize ?? 25),
+            note: returnedCount === (pageSize ?? 25) ? "This page is full - more results may exist. Narrow your conditions or request the next page if needed" : undefined,
+            results: result,
+          }, null, 2),
+        }],
+      };
+      // return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     },
   );
 
@@ -42,7 +56,7 @@ export function registerProjectTools(server: McpServer, client: CwManageClient) 
       projectId: z.number().optional().describe("Filter by project ID"),
       conditions: z.string().optional().describe("ConnectWise conditions query string"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
       orderBy: z.string().optional().describe("Field to order by (e.g. 'id desc')"),
     },
     async ({ projectId, conditions, page, pageSize, orderBy }) => {
@@ -56,7 +70,21 @@ export function registerProjectTools(server: McpServer, client: CwManageClient) 
         pageSize: pageSize ?? 25,
         orderBy,
       });
-      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      const returnedCount = Array.isArray(result) ? result.length : undefined;
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            page: page ?? 1,
+            pageSize: pageSize ?? 25,
+            returnedCount,
+            hasMore: returnedCount === (pageSize ?? 25),
+            note: returnedCount === (pageSize ?? 25) ? "This page is full - more results may exist. Narrow your conditions or request the next page if required." : undefined,
+            results: result,
+          }, null, 2),
+        }],
+      };
+      //return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     },
   );
 
@@ -78,7 +106,7 @@ export function registerProjectTools(server: McpServer, client: CwManageClient) 
     {
       id: z.number().describe("Project ticket ID"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
     },
     async ({ id, page, pageSize }) => {
       try {

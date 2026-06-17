@@ -9,7 +9,7 @@ export function registerServiceTools(server: McpServer, client: CwManageClient) 
     {
       conditions: z.string().optional().describe("ConnectWise conditions query string"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
     },
     async ({ conditions, page, pageSize }) => {
       const result = await client.get("/service/boards", {
@@ -27,7 +27,7 @@ export function registerServiceTools(server: McpServer, client: CwManageClient) 
     {
       conditions: z.string().optional().describe("ConnectWise conditions query string"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
     },
     async ({ conditions, page, pageSize }) => {
       const result = await client.get("/service/priorities", {
@@ -46,7 +46,7 @@ export function registerServiceTools(server: McpServer, client: CwManageClient) 
       boardId: z.number().describe("Service board ID"),
       conditions: z.string().optional().describe("ConnectWise conditions query string"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
     },
     async ({ boardId, conditions, page, pageSize }) => {
       const result = await client.get(`/service/boards/${boardId}/statuses`, {

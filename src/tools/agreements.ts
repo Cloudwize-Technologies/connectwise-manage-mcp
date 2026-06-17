@@ -9,7 +9,7 @@ export function registerAgreementTools(server: McpServer, client: CwManageClient
     {
       conditions: z.string().optional().describe("ConnectWise conditions query string"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
       orderBy: z.string().optional().describe("Field to order by"),
     },
     async ({ conditions, page, pageSize, orderBy }) => {
@@ -41,7 +41,7 @@ export function registerAgreementTools(server: McpServer, client: CwManageClient
     {
       agreementId: z.number().describe("Agreement ID"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
     },
     async ({ agreementId, page, pageSize }) => {
       const result = await client.get(`/finance/agreements/${agreementId}/additions`, {
@@ -58,7 +58,7 @@ export function registerAgreementTools(server: McpServer, client: CwManageClient
     {
       conditions: z.string().optional().describe("ConnectWise conditions query string (e.g. \"company/name = 'Acme'\")"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
       orderBy: z.string().optional().describe("Field to order by (e.g. 'id desc')"),
     },
     async ({ conditions, page, pageSize, orderBy }) => {

@@ -9,7 +9,7 @@ export function registerOpportunityTools(server: McpServer, client: CwManageClie
     {
       conditions: z.string().optional().describe("ConnectWise conditions query string"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
       orderBy: z.string().optional().describe("Field to order by (e.g. 'id desc')"),
     },
     async ({ conditions, page, pageSize, orderBy }) => {
@@ -41,7 +41,7 @@ export function registerOpportunityTools(server: McpServer, client: CwManageClie
     {
       opportunityId: z.number().describe("Opportunity ID"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
     },
     async ({ opportunityId, page, pageSize }) => {
       const result = await client.get(`/sales/opportunities/${opportunityId}/forecast`, {
@@ -58,7 +58,7 @@ export function registerOpportunityTools(server: McpServer, client: CwManageClie
     {
       opportunityId: z.number().describe("Opportunity ID"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
     },
     async ({ opportunityId, page, pageSize }) => {
       const result = await client.get(`/sales/opportunities/${opportunityId}/notes`, {
@@ -75,7 +75,7 @@ export function registerOpportunityTools(server: McpServer, client: CwManageClie
     {
       conditions: z.string().optional().describe("ConnectWise conditions query string"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
     },
     async ({ conditions, page, pageSize }) => {
       const result = await client.get("/sales/stages", {

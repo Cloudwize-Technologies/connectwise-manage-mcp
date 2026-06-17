@@ -20,7 +20,7 @@ export function registerCatalogTools(server: McpServer, client: CwManageClient) 
     {
       conditions: z.string().optional().describe("ConnectWise conditions query string"),
       page: z.number().optional().describe("Page number (default: 1)"),
-      pageSize: z.number().optional().describe("Results per page (default: 25, max: 1000)"),
+      pageSize: z.number().optional().describe("Results per page (default: 25, max: 100)"),
       orderBy: z.string().optional().describe("Field to order by (e.g. 'identifier asc')"),
     },
     async ({ conditions, page, pageSize, orderBy }) => {
